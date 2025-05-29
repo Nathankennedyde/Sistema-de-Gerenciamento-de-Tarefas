@@ -1,0 +1,177 @@
+import java.util.List;
+import java.util.Scanner;
+
+public class Main {
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        TarefaManager manager = new TarefaManager();
+
+        boolean rodando = true;
+
+        while (rodando) {
+            System.out.println("\n--- MENU DE TAREFAS ---");
+            System.out.println("1. Adicionar tarefa");
+            System.out.println("2. Excluir tarefa");
+            System.out.println("3. Modificar status de tarefa");
+            System.out.println("4. Atribuir responsável");
+            System.out.println("5. Cadastrar responsável");
+            System.out.println("6. Sair");
+            System.out.print("Escolha uma opção: ");
+
+            int opcao = scanner.nextInt();
+            scanner.nextLine(); // consumir enter
+
+            switch (opcao) {
+                case 1 -> { // Adicionar tarefa
+                    System.out.print("ID da tarefa: ");
+                    int id = scanner.nextInt();
+                    scanner.nextLine();
+
+                    if (manager.buscarTarefaPorId(id) != null) {
+                        System.out.println("ID já utilizado. Tente novamente.");
+                        break;
+                    }
+
+                    System.out.print("Título: ");
+                    String titulo = scanner.nextLine();
+
+                    System.out.print("Descrição: ");
+                    String descricao = scanner.nextLine();
+
+                    System.out.print("ID da categoria: ");
+                    int idCategoria = scanner.nextInt();
+                    scanner.nextLine();
+
+                    // Criar categoria só com id e nome genérico (ou poderia ter cadastro separado)
+                    Categoria categoria = new Categoria(idCategoria, "Categoria " + idCategoria);
+
+                    Tarefa tarefa = new Tarefa(id, titulo, descricao, categoria);
+                    manager.adicionarTarefa(tarefa);
+
+                    System.out.println("Tarefa adicionada com status ABERTO.");
+                }
+
+                case 2 -> { // Excluir tarefa
+                    List<Tarefa> tarefas = manager.listarTarefas();
+                    if (tarefas.isEmpty()) {
+                        System.out.println("Nenhuma tarefa para excluir.");
+                        break;
+                    }
+                    System.out.println("Tarefas:");
+                    for (Tarefa t : tarefas) {
+                        System.out.println(t.getId() + ": " + t.getTitulo());
+                    }
+                    System.out.print("Digite o ID da tarefa que deseja excluir: ");
+                    int idExcluir = scanner.nextInt();
+                    scanner.nextLine();
+
+                    if (manager.removerTarefaPorId(idExcluir)) {
+                        System.out.println("Tarefa removida.");
+                    } else {
+                        System.out.println("Tarefa não encontrada.");
+                    }
+                }
+
+                case 3 -> { // Modificar status
+                    List<Tarefa> tarefas = manager.listarTarefas();
+                    if (tarefas.isEmpty()) {
+                        System.out.println("Nenhuma tarefa cadastrada.");
+                        break;
+                    }
+                    System.out.println("Tarefas:");
+                    for (Tarefa t : tarefas) {
+                        System.out.println(t.getId() + ": " + t.getTitulo() + " (Status: " + t.getStatus() + ")");
+                    }
+                    System.out.print("Digite o ID da tarefa para modificar o status: ");
+                    int idStatus = scanner.nextInt();
+                    scanner.nextLine();
+
+                    Tarefa tarefa = manager.buscarTarefaPorId(idStatus);
+                    if (tarefa == null) {
+                        System.out.println("Tarefa não encontrada.");
+                        break;
+                    }
+
+                    System.out.println("Status possíveis:");
+                    for (Tarefa.Status s : Tarefa.Status.values()) {
+                        System.out.println(s);
+                    }
+                    System.out.print("Digite o novo status: ");
+                    String novoStatusStr = scanner.nextLine().toUpperCase();
+
+                    try {
+                        Tarefa.Status novoStatus = Tarefa.Status.valueOf(novoStatusStr);
+                        manager.alterarStatusDaTarefa(idStatus, novoStatus);
+                        System.out.println("Status atualizado.");
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("Status inválido.");
+                    }
+                }
+
+                case 4 -> { // Atribuir responsável
+                    List<Tarefa> tarefas = manager.listarTarefas();
+                    List<Colaborador> colaboradores = manager.listarColaboradores();
+
+                    if (tarefas.isEmpty()) {
+                        System.out.println("Nenhuma tarefa cadastrada.");
+                        break;
+                    }
+                    if (colaboradores.isEmpty()) {
+                        System.out.println("Nenhum responsável cadastrado.");
+                        break;
+                    }
+
+                    System.out.println("Tarefas:");
+                    for (Tarefa t : tarefas) {
+                        System.out.println(t.getId() + ": " + t.getTitulo());
+                    }
+                    System.out.print("Digite o ID da tarefa: ");
+                    int idTarefa = scanner.nextInt();
+                    scanner.nextLine();
+
+                    System.out.println("Responsáveis:");
+                    for (Colaborador c : colaboradores) {
+                        System.out.println(c.getId() + ": " + c.getNome());
+                    }
+                    System.out.print("Digite o ID do responsável: ");
+                    int idResp = scanner.nextInt();
+                    scanner.nextLine();
+
+                    if (manager.atribuirResponsavel(idTarefa, idResp)) {
+                        System.out.println("Responsável atribuído com sucesso.");
+                    } else {
+                        System.out.println("Erro ao atribuir responsável (verifique IDs).");
+                    }
+                }
+
+                case 5 -> { // Cadastrar responsável
+                    System.out.print("ID do responsável: ");
+                    int idCol = scanner.nextInt();
+                    scanner.nextLine();
+
+                    if (manager.buscarColaboradorPorId(idCol) != null) {
+                        System.out.println("ID já utilizado. Tente outro.");
+                        break;
+                    }
+
+                    System.out.print("Nome do responsável: ");
+                    String nomeCol = scanner.nextLine();
+
+                    Colaborador novoCol = new Colaborador(idCol, nomeCol);
+                    manager.adicionarColaborador(novoCol);
+                    System.out.println("Responsável cadastrado.");
+                }
+
+                case 6 -> {
+                    System.out.println("Saindo...");
+                    rodando = false;
+                }
+
+                default -> System.out.println("Opção inválida. Tente novamente.");
+            }
+        }
+
+        scanner.close();
+    }
+}
